@@ -73,6 +73,9 @@ jobs:
              "refs/heads/prod")
               overlay_dir="prod"
               ;;
+              "refs/heads/main")
+              overlay_dir="main"
+              ;;
              *)
               echo "Unexpected branch: ${{ github.ref }}"
               exit 1

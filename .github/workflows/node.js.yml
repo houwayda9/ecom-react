@@ -41,3 +41,33 @@ jobs:
             
           # build on feature branches, push only on main branch
           push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'}}
+  update-kustomize-file-overrlays:
+     if: github.ref == 'refs/heads/dev'
+     runs-on: ubuntu-latest
+     needs: ['build-and-push-docker-image']
+     steps:
+      - name: Checkout another repository
+        uses: actions/checkout@v2
+        with:
+          repository: houwayda9/ecom-kustomize
+          ref: main
+          token: ${{ secrets.G_TOKEN }}
+          path: houwayda9/ecom-kustomize 
+      - name: Debug
+        run: |
+         cd houwayda9/ecom-kustomize/kustomize
+         ls -l  
+         cd overlays/dev
+         sed -i "s|newTag: .*|newTag: ${{ github.sha }}|" kustomization.yaml 
+         cat kustomization.yaml
+         ls -l
+      - name: Update Kustomize file
+        run: |
+            pwd
+            cd houwayda9/kustomize/kustomize/overlays/dev
+            git config --global user.email ${{ secrets.USER_EMAIL }}
+            git config --global user.name ${{ secrets.USER_NAME }}
+            git add kustomization.yaml
+            git commit -m "Update image for - ${{ github.sha }}"
+            git push origin main
+            

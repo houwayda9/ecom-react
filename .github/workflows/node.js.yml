@@ -10,40 +10,30 @@ on:
 
 
 jobs:
-  build:
+ 
+ build-and-push-docker-image:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/prod' && 'prod' || 'dev' }} 
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js 
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16.x'
-    - run: npm ci
-  build-and-push-docker-image :
-    name: login to DockerHub and push image to repositorie
-    runs-on: ubuntu-latest
-    needs: ['build']
-    steps:
-     - name: Checkout code
-       uses: actions/checkout@v3
-     - name: Login to DockerHub
-       uses: docker/login-action@v2
-       with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ vars.DOCKER_USERNAME}}
+          password:  ${{ secrets.DOCKER_PASSWORD }}
       
-     - name: Build image and push to Docker Hub 
-       uses: docker/build-push-action@v2
-       with:
-          # relative path to the place where source code with Dockerfile is located
+      - name: Build image and push to Docker Hub 
+        uses: docker/build-push-action@v2
+        with:
           context: ./
-          # Note: tags has to be all lower-case
           tags: |
-            houwayda/ecom-front:${{ github.sha }} 
-            
-          # build on feature branches, push only on main branch
-          push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'}}
-  update-kustomize-file-overrlays:
+            houwayda/ecom_front_${{ github.ref == 'refs/heads/prod' && 'prod' || 'dev' }}:${{ github.sha }}
+          push: true
+ update-kustomize-file-overrlays:
      if: github.ref == 'refs/heads/dev'
      runs-on: ubuntu-latest
      needs: ['build-and-push-docker-image']
